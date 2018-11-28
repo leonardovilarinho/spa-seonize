@@ -17,6 +17,38 @@ run('./library.json', './index.html');
 
 Após isso, no `index.html` adicione a anotação `#meta-data#` dentro da tag `head` do documento. Assim o script PHP saberá onde exatamente deve colocar o SEO.
 
+## Configurando o servidor
+
+Seu servidor PHP deve estar disposto a trabalhar com URL amigáveis, para redirecionar todo o conteúdo da aplicação para o `index.php`, segue um exemplo de configuração
+no Nginx:
+
+```
+server {
+  listen 80;
+  root /caminho/do/projeto;
+  index index.php index.html;
+  server_name site.local;
+
+  location / {
+    try_files $uri $uri/ @rewrites;
+  }
+
+  location @rewrites {
+    rewrite ^/(.*)$ /index.php last;
+  }
+
+  location ~ \.php$ {
+    include snippets/fastcgi-php.conf;
+    fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
+  }
+
+  location ~ /\.ht {
+    deny all;
+  }
+}
+
+```
+
 ## Entendendo o `library.json`
 
 Nesse arquivo JSON você deve colocar os dados gerais da aplicação, suas rotas com a configuração de SEO:
