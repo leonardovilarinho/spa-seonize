@@ -1,8 +1,8 @@
 <?php
 require('./vendor/autoload.php');
-$dotenv = Dotenv\Dotenv::create('../');
+$dotenv = Dotenv\Dotenv::create(__DIR__);
 $dotenv->load();
-run('./seo.json', './seo.html');
+run('./library.json', './index.html');
 function run ($libraryPath, $vueApp) {
 	$library = file_get_contents(__DIR__.'/'.$libraryPath);
 	$library = json_decode($library, true);
@@ -42,11 +42,20 @@ function run ($libraryPath, $vueApp) {
 	}
 
 	if (!$isDynamic) die(writeMeta($appData, $route['meta'], $vueApp));
+	//replace url shortcuts for the request propertie
 	if(isset($route['meta']['_request']['url'])){
-		$route['meta']['_request']['url'] = str_replace (array('__API__', '__HOST__'), array(getenv('APP_ENV') === 'production' ? 'https://www.'.getenv('PRODUCTION_API') : 'http://'.getenv('DEV_API'), (getenv('APP_ENV') === 'production' ? 'https://www.' : 'http://').$_SERVER['HTTP_HOST']), $route['meta']['_request']['url']);
+		$protocol = getenv('APP_ENV') === 'production' ? 'https://www.' : 'http://';
+		$route['meta']['_request']['url'] = str_replace (array(
+			'__API__',
+			'__HOST__'
+		), array(
+			$protocol.getenv('API'),
+			$protocol.$_SERVER['HTTP_HOST']
+		), $route['meta']['_request']['url']);
 	}
+	//replace url shortcut for the image propertie
 	if(isset($route['meta']['image'])){
-		$route['meta']['image'] = str_replace ( '__THUMBNAIL_IMG__', getenv('APP_ENV') === 'production' ? 'https://www.'.getenv('PRODUCTION_THUMBNAIL_IMG') : 'http://'.getenv('DEV_THUMBNAIL_IMG'), $route['meta']['image']);
+		$route['meta']['image'] = str_replace ('__THUMBNAIL_IMG__', $protocol.getenv('API_THUMBNAIL'), $route['meta']['image']);
 	}
 	$dynamicData = getDynamicMeta($route['meta'], $route['route']);
 	die(writeMeta($appData, $dynamicData['meta'], $vueApp, ['name' => $route['name'], 'data' => $dynamicData['data']]));
@@ -92,6 +101,7 @@ function writeMeta ($appData, $meta, $vueApp, $data = null) {
 	$file = file_get_contents(__DIR__.'/'.$vueApp);
 	$replace = '';
 
+	//fallbacks
 	$title = isset($meta['title']) ? $meta['title'] : $appData['title'];
 	$canonical = 'https://www.'.$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 	$description = isset($meta['description']) ? $meta['description'] : $appData['description'];
@@ -147,7 +157,7 @@ function getRouteParams ($route, $meta) {
 		}
 		$routeParams = array_merge($routeParams, $routeQueryResults);
 	}
-	//comparar
+	//compare
 	$result = [];
 	foreach ($routeParams as $key => $value) {
 		if (stripos($value, ':') !== false) {

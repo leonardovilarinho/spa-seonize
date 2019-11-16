@@ -1,1 +1,4 @@
 library.json
+*.lock
+vendor/
+.env
