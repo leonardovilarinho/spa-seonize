@@ -1,0 +1,17 @@
+<IfModule mod_rewrite.c>
+	Options +FollowSymlinks
+	RewriteEngine On
+
+	# RewriteLog /var/log/rewrite.log
+	# RewriteLogLevel 3
+
+	#check if file is matched 
+	RewriteCond %{REQUEST_FILENAME} !-f
+	RewriteCond %{REQUEST_FILENAME} !-d 
+
+	#spa route handler
+	RewriteRule (.*) index.php [L]
+		
+</IfModule>
+
+ErrorDocument 404 /404

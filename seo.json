@@ -1,0 +1,154 @@
+{
+    "_name": "APP NAME",
+    "_title": "DEFAULT PAGE TITLE",
+    "_description": "DEFAULT PAGE DESCRIPTION",
+    "_image": "DEFAULT OG/TWITTER IMAGE",
+    "_keywords": "DEFAULT CSV OF KEYWORDS",
+    "_404": "/404",
+    "pages": [
+        {
+            "name": "Example",
+            "route": "/example",
+            "meta": {
+                "title": "META CAN'T BE EMPTY AT ALL, USE AT LEAST ONE PROPERTIE, UNSETTET ONES WILL FALLBACK TO DEFAULTS ABOVE"
+            }
+        },
+        {
+            "name": "Home",
+            "route": "/",
+            "meta": {
+                "title": "Seo | Home page"
+            }
+        },
+        {
+            "name": "Store",
+            "route": "/store",
+            "meta": {
+                "title": "Store page",
+                "image": "https://picsum.photos/id/237/200/300"
+            }
+        },
+            {
+                "name": "Fullpagetion",
+                "route": "/store/page/:pageNumber",
+                "meta": {
+                    "title": "Page $page$ : Seo | Store",
+                    "image": "https://picsum.photos/id/237/200/300",
+                    "_request": {
+                        "url": "__HOST__/req.php",
+                        "interger": [
+                            ":pageNumber"
+                        ],
+                        "data": {
+                            "page": ":pageNumber"
+                        }
+                    }
+                }
+            },
+            {
+                "name": "Search",
+                "route": "/store/search?q=:param",
+                "meta": {
+                    "title": "Searching for \"$parameter$\" on Seo",
+                    "image": "https://picsum.photos/id/237/200/300",
+                    "_request": {
+                        "url": "__HOST__/req.php",
+                        "data": {
+                            "parameter": ":param"
+                        }
+                    }
+                }
+            },
+                {
+                    "name": "Searchpagetion",
+                    "route": "/store/search/page/:pageNumber?q=:param",
+                    "meta": {
+                        "title": "Page $page$ : Searching for \"$parameter$\" on Seo",
+                        "image": "https://picsum.photos/id/237/200/300",
+                        "_request": {
+                                "url": "__HOST__/req.php",
+                                "interger": [
+                                    ":pageNumber"
+                                ],
+                                "data": {
+                                    "page": ":pageNumber",
+                                    "parameter": ":param"
+                                }
+                            }
+                        }
+                    },
+            {
+                "name": "Category",
+                "route": "/store/:category",
+                "meta": {
+                    "title": "$category$ on Seo",
+                    "image": "https://picsum.photos/id/237/200/300",
+                    "_request": {
+                        "url": "__HOST__/req.php",
+                        "data": {
+                            "category": ":category"
+                        }
+                    }
+                }
+            },
+                {
+                    "name": "Categorypagetion",
+                    "route": "/store/:category/page/:pageNumber",
+                    "meta": {
+                        "title": "Page $page$ : $category$ on Seo",
+                        "image": "https://picsum.photos/id/237/200/300",
+                        "_request": {
+                            "url": "__HOST__/req.php",
+                            "interger": [
+                                ":pageNumber"
+                            ],
+                            "data": {
+                                "page": ":pageNumber",
+                                "category": ":category"
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "ProductModal",
+                    "route": "/store/:category/:productId",
+                    "meta": {
+                        "title": "Buy $nombre$ on Seo",
+                        "image": "__THUMBNAIL_IMG__/$foto$",
+                        "_request": {
+                            "url": "__API__/quickView",
+                            "post": true,
+                            "interger": [
+                                ":productId"
+                            ],
+                            "data": {
+                                "id": ":productId"
+                            }
+                        }
+                    }
+                },
+        {
+            "name": "Cart",
+            "route": "/cart",
+            "meta": {
+                "title": "Seo | Your cart"
+            }
+        },
+        {
+            "name": "Support",
+            "route": "/support",
+            "meta": {
+                "title": "Seo | Support"
+            }
+        },
+        {
+            "name": "error404",
+            "route": "/404",
+            "meta": {
+                "title": "Seo | 404",
+                "description": "¡Opps! Everything fall apart.",
+                "image": "https://picsum.photos/seed/404/200/300"
+            }
+        }
+    ]
+}
