@@ -1,221 +1,172 @@
-# SPA PHP SEO
+# SPA Seonize
 
-> Repositório para escrever um SEO no servidor PHP para aplicações Vue, Angular ou React.
+> Simple alternative to SEO in SPA's
 
-Para usar, basta inserir o arquivo `index.php` no seu projeto, na primeira linha do arquivo, coloque a localicação de dois arquivos:
+## Installation
 
-- `library.json`: arquivo que irá informar as rotas da sua aplicação para o PHP;
-- `index.html`: arquivo de entrada do SPA, arquivo compilado pelo Vue, React ou Angular.
+- Clone this repository
+- Run `composer install`
+- Edit `index.php` with your routes and SEO definitions
 
-Por exemplo: 
+## How to use
+
+The use of this library is simple, just use the `Router` class, starting with the path of your spa's `index.html`. Passing the resolution of each route and finally starting to read the router:
+
 ```php
 <?php
 
-// para arquivos localizados na mesma pasta do index.php
-run('./library.json', './index.html');
+use LeonardoVilarinho\SpaSeonize\Router;
+
+require_once __DIR__ . '/vendor/autoload.php';
+
+$router = new Router(__DIR__. '/index.html');
+
+$router->resolve('/', function ($http, $params, $query) {
+  return [
+    'title' => 'My home page',
+    'data' => [
+      'page' => 'home',
+    ],
+    'meta' => [
+      [
+        'name' => 'description',
+        'content' => 'Example SPA Seonize with php'
+      ],
+    ]
+  ];
+});
+
+$router->start();
 ```
 
-Após isso, no `index.html` adicione a anotação `#meta-data#` dentro da tag `head` do documento. Assim o script PHP saberá onde exatamente deve colocar o SEO.
+In the previous example we declared only the SEO of a static page, the application's home page, returning an array with the title and meta tags of the current page. You can also send a variable to Javascript using `data`. The result in HTML will be:
 
-## Configurando o servidor
+```html
+<!--SPA-SEONIZE-START-->
+<title>My home page</title>
+<meta name="description" content="Example SPA Seonize with php" />
 
-Seu servidor PHP deve estar disposto a trabalhar com URL amigáveis, para redirecionar todo o conteúdo da aplicação para o `index.php`, segue um exemplo de configuração
-no Nginx:
-
-```
-server {
-  listen 80;
-  root /caminho/do/projeto;
-  index index.php index.html;
-  server_name site.local;
-
-  location / {
-    try_files $uri $uri/ @rewrites;
-  }
-
-  location @rewrites {
-    rewrite ^/(.*)$ /index.php last;
-  }
-
-  location ~ \.php$ {
-    include snippets/fastcgi-php.conf;
-    fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
-  }
-
-  location ~ /\.ht {
-    deny all;
-  }
-}
-
+<script>window.spaSeonize = {"page":"home"};</script>
+<!--SPA-SEONIZE-END-->
 ```
 
-## Entendendo o `library.json`
+### What is resolution?
 
-Nesse arquivo JSON você deve colocar os dados gerais da aplicação, suas rotas com a configuração de SEO:
+Each router's `resolve` method must receive two parameters:
 
-```json
-{
-  "_name": "My Project",
-  "_404": "/not-found",
-  "pages": [
-    {
-      "name": "home",
-      "route": "/",
-      "meta": {
-        "title": "Home Page",
-        "description": "This is the home page"
-      }
-    },
+- `path-of-route`: a string with the path of your page, in case of dynamic pages use brackets to create variables in the path, example: `/users/{user}`, so the content after the second bar will be sent to a variable.
+- `callback`: a function that is called whenever the router identifies that the current page corresponds to that of the first parameter
 
-    {
-      "name": "notfound",
-      "route": "/not-found",
-      "meta": {
-        "title": "Page not founded",
-        "description": "This is not founded"
-      }
-    },
+#### Understanding the callback
 
-    {
-      "name": "city",
-      "route": "/city/:cep",
-      "meta": {
-        "title": "Cidade: $localidade$",
-        "description": "Endereço: $logradouro$, $complemento$ - $bairro$ - $localidade$/$uf$",
-        "_request": {
-          "url": "https://viacep.com.br/ws/:cep/json",
-          "data": {
-            "cep": ":cep",
-            "test": true
-          }
-        }
-      }
-    }
-  ]
-}
+The router calls the callback whenever the current route is the same as indicated in `resolve`. This function receives 3 attributes:
+
+- `$http`: an instance of the `curl/curl` library, where you can make any request, [see the documentation here](https://github.com/php-mod/curl) to see what you can do when calling your API.
+- `$params`: these are the dynamic parameters of the request, as in the previous example we had `/users/{user}`, so when accessing `/users/leonardovilarinho` this parameter will have a `user` element with the value `leonardovilarinho`.
+- `$query`: an array of the URL query string, the same as accessing PHP `$ _GET`.
+
+### Static pages
+
+To define the seo of a static page just return the array with the data to be added in SEO, just like the previous example we have this for the user list page:
+
+```php
+$router->resolve('/users', function ($http, $params, $query) {
+  return [
+    'title' => 'Users of github',
+    'data' => [
+      'page' => 'users',
+      'list' => ['user1', 'user2'],
+    ],
+    'meta' => [
+      [
+        'name' => 'description',
+        'content' => 'Example users page'
+      ],
+    ],
+    'link' => [
+      [
+        'rel' => 'canonical',
+        'href' => '{url}'
+      ],
+    ],
+  ];
+});
 ```
 
-Nele, temos os atributos principais:
+See the generated HTML:
+```html
+<!--SPA-SEONIZE-START-->
+<title>Users of github</title>
+<meta name="description" content="Example users page" />
+<link rel="canonical" href="http://localhost:4000/users" />
 
-- `_name`: para indicar o nome do sistema, ele será concatenado no fim do título de cada página;
-- `_404`: para indicar qual rota irá apresentar a página de erro 404, assim podemos redirecionar para ela quando não econtrar nada;
-- `pages`: armazena o array de rotas do sistema. Onde cada rota poderá ter os atributos:
-  - `name`: nome da rota;
-  - `route`: caminho da rota, você pode usar `:param` para indicar parâmetros de uma rota dinâmica (como no Vue Router);
-  - `meta`: metadados da rota, com nome e valor do mesmo;
-
-
-## SEO estático
-
-Podemos fazer o SEO para páginas estáticas simplesmente colocando os dados do mesmo dentro do atributo `meta` da rota, por exemplo para a página inicial:
-
-```json
-{
-  "name": "home",
-  "route": "/",
-  "meta": {
-    "title": "Home Page",
-    "description": "This is the home page"
-  }
-}
+<script>window.spaSeonize = {"page":"users","list":["user1","user2"]};</script>
+<!--SPA-SEONIZE-END-->
 ```
 
-## SEO dinâmico
+### Dynamic pages
 
-Muitas aplicações fazem uso de requisições AJAX para montar seu conteúdo, podemos criar o SEO dessas páginas também. Para isso você terá de informar dentro do atributo
-`meta` da rota os dados da requisição AJAX, em `_request`:
+You can also SEO static pages, for this in the URL path define a name for the dynamic part (user in example), so you can use the variables `http`,` params` and `query` to make requests in your API using the url or query string parameters and set up the SEO with the return of the same. See the example:
 
-```json
-{
-  "name": "city",
-  "route": "/city/:cep",
-  "meta": {
-    "title": "Cidade: $localidade$",
-    "description": "Endereço: $logradouro$, $complemento$ - $bairro$ - $localidade$/$uf$",
-    "_request": {
-      "url": "https://viacep.com.br/ws/:cep/json",
-      "data": {
-        "cep": ":cep",
-        "test": true
-      }
-    }
-  }
-}
+```php
+$router->resolve('/users/{user}', function ($http, $params, $query) {
+  $http->get('https://api.github.com/users/' . $params['user']);
+  $response = json_decode($http->response);
+
+  return [
+    'title' => $response->name,
+    'data' => [
+      'page' => 'user',
+      'user' => $response,
+    ],
+    'meta' => [
+      [
+        'name' => 'description',
+        'content' => $response->bio
+      ],
+    ],
+  ];
+});
 ```
 
-O atributo `_request` deve ter:
+See the HTML generated when accessing `/users/leonardovilarinho`:
 
-- `url`: indicando o endpoint onde ele deve buscar o recurso requerido na página;
+```html
+<!--SPA-SEONIZE-START-->
+<title>Leonardo Vilarinho</title>
+<meta name="description" content="Freelance Full Stack PHP Developer" />
 
-Esse atributo também pode ter opcionalmente as opções:
-
-- `data`: para informar os dados que devemos enviar para a API;
-- `post`: para informar que devemos fazer uma requisição do método POST e não GET. Use: `"post": true`;
-
-**Notas:**
-
-- Veja que podemos usar parâmetros dentro da URL ou do `data` da request, assim o script PHP irá trocar o parâmetro pelo valor indicado na rota do SPA, no
-exemplo acima, a request enviada seria (para o CEP 38300970, ou rota, /city/38300970):
-
-```
-GET https://viacep.com.br/ws/38300970/json
-
-{
-  "cep": "38300970",
-  "test": true
-}
+<script>window.spaSeonize = {"page":"user","user":{ USER-RETURNED-FROM-GITHUB }};</script>
+<!--SPA-SEONIZE-END-->
 ```
 
-- Podemos montar o SEO com o retorno da request, para isso basta indicarmos entre cifrões ($) o dado a ser mostrado ali, por exemplo, a request dessa api de CEP me retorna:
+### Unrecognized pages
 
-```json
-{
-  "cep": "38300-970",
-  "logradouro": "Avenida Nove",
-  "complemento": "670",
-  "bairro": "Centro",
-  "localidade": "Ituiutaba",
-  "uf": "MG",
-  "unidade": "",
-  "ibge": "3134202",
-  "gia": ""
-}
+Use fallback to define the SEO of pages not found in the resolutions registered on the router. See the example:
+
+```php
+$router->fallback(function ($http, $params, $query) {
+  return [
+    'title' => '404 - Page not found',
+    'data' => [
+      'page' => 'notfound'
+    ],
+    'meta' => [
+      [
+        'name' => 'description',
+        'content' => 'Page not found'
+      ],
+    ],
+  ];
+});
 ```
 
-Logo, usarei `$localidade$` para mostrar a cidade no título, e assim por diante...
+See the HTML generated when accessing `/another-page`:
+```html
+<!--SPA-SEONIZE-START-->
+<title>404 - Page not found</title>
+<meta name="description" content="Page not found" />
 
-## Poupando requests no seu SPA
-
-Toda vez que o usuário entrar diretamente em uma rota dinâmica, como `/city/38300970`, o PHP já fará a request para buscar o CEP, então podemos poupar outra request no nosso
-framework de frontend para montar o layout. Só de usar esse script desse repositório, já será montada uma váriavel `window.phpseo_rota` onde `rota` será o nome da rota atual,
-exemplo `window.phpseo_city` para a rota `/city/38300970`, armazenado o retorno da requisição:
-
-```json
-{
-  "cep": "38300-970",
-  "logradouro": "Avenida Nove",
-  "complemento": "670",
-  "bairro": "Centro",
-  "localidade": "Ituiutaba",
-  "uf": "MG",
-  "unidade": "",
-  "ibge": "3134202",
-  "gia": ""
-}
+<script>window.spaSeonize = {"page":"notfound"};</script>
+<!--SPA-SEONIZE-END-->
 ```
-
-Assim, você no Vue, React ou Angular, no componente da página, você poderá verificar a existência dessa variável para poder puxa-la para o framework. Usando algo mais ou
-menos assim (no Vue):
-
-```javascript
-mounted () {
-  if ('phpseo_city' in window) {
-    this.city = window.phpseo_city
-  } else [
-    // faça a request do cep novamente aqui, assim quando o usuário não acessar o link diretamente ele irá buscar pelo seu framework front-end
-  ]
-}
-```
-
-**Nota:** como você deve ter pensado, você terá de usar o `vue-head` ou `vue-meta` para ter a certeza de que os títulos serão trocados dinamicamente no seu SPA, dado que
-o script PHP só será executando quando o usuário acessar a rota diretamente pela URL ou quando um indexador acessar.

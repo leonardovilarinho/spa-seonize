@@ -4,10 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    #meta-data#
+    <title>Default Title</title>
   </head>
 
   <body>
-    <h1>Page</h1>
+    <h1 id="mypage">Page</h1>
+    <img src="" width="100px" height="100px" id="avatar">
+
+    <hr>
+    <div id="data">Data: </div>
+
+    <script>
+      const mypage = document.getElementById('mypage');
+      const data = document.getElementById('data');
+      const avatar = document.getElementById('avatar');
+
+      mypage.innerText = window.spaSeonize.page;
+      data.innerHTML = 'Data: <pre>' + JSON.stringify(window.spaSeonize) + '</pre>';
+
+      if (window.spaSeonize.page === 'user') {
+        avatar.src = window.spaSeonize.user.avatar_url;
+      }
+    </script>
   </body>
 </html>
